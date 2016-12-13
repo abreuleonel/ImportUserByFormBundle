@@ -1,6 +1,6 @@
 #### Description:
 
-This is a Mautic Plugin that allow you to Import a List of Contacts Using a CSV file and any Form create.
+This is a Mautic Plugin that allow you to Import a List of Contacts Using a CSV file and any Form created.
 
 #### Steps to test this Plugin:
 1. Put this project in the plugins Folder.
