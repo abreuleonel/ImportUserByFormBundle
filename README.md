@@ -28,6 +28,8 @@ maria@emailserver.com.br;Maria Helena
 ```
 
 The field form of json file is a reference of the form created in mautic, where the key is the name of field of the form and the value is the index of the csv file column. Remember that the count always start with ZERO.
+
 7. Verify if the csv and json files are in the folder that you configurated in plugin config file.
+
 8. Enter in mautic/app folder and execute the command: php console eou:contacts:import-form-file --file import.json OR configure your crontab to execute this command.
 
