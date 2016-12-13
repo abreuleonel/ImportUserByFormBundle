@@ -29,7 +29,7 @@ return [
     ],
 		
 	'parameters' => [
-		'import_folder' => '/var/www/html/projects/shellbox/public_html/EOU/LeadsFileImport/Arquivos/',
-		'process_folder' => '/var/www/html/projects/shellbox/public_html/EOU/LeadsFileImport/Arquivos/Processados/',
+		'import_folder' => '/tmp/lead-import/',
+		'process_folder' => '/tmp/lead-import/',
 	]
 ];

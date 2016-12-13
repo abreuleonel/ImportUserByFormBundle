@@ -52,9 +52,13 @@ class ImportController extends CommonController
     	$valid = $this->verifyJsonFile($_FILES['json_config']['tmp_name']);
     	
 		if($valid) {
-    		move_uploaded_file($_FILES['json_config']['tmp_name'], $import_folder . '/' . $_FILES['json_config']['name']);
+			move_uploaded_file($_FILES['json_config']['tmp_name'], $import_folder . '/' . $_FILES['json_config']['name']);
+    		chmod($import_folder . '/' . $_FILES['json_config']['name'], 0755);
+    		
     		move_uploaded_file($_FILES['csv_file']['tmp_name'], $import_folder . '/' . $_FILES['csv_file']['name']);
-	    	return $this->redirect('/s/importuserbyform');
+    		chmod($import_folder . '/' . $_FILES['csv_file']['name'], 0755);
+	    	
+    		return $this->redirect('/s/importuserbyform');
 		} else {
 			echo 'Error: Invalid JSON! <a href="/s/importuserbyform"> Try Again </a>';
 			exit;

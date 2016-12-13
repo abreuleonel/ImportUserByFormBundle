@@ -123,8 +123,8 @@ class LeadsFormFileImportCommand extends ModeratedCommand
 	private function moveFiles($config, $dir, $config_file) 
 	{
 		$filename = explode('.', $config->file)[0];
-		$new_dir = $dir . '/Processados/' . $filename . '/';
-		mkdir($new_dir);
+		$new_dir = $this->getContainer()->get('mautic.helper.core_parameters')->getParameter('process_folder') . $filename . '/';
+		mkdir($new_dir, 0755, true);
 		
 		$csv_file = $dir . $config->file;
 		$import_file = $dir . $config_file;
