@@ -11,7 +11,7 @@ This is a Mautic Plugin that allow you to Import a List of Contacts Using a CSV 
 ```json
 {
 	"file": "file_name.CSV",
-	"form_id": (int)form_id,
+	"form_id": "number_form_id",
 	"mautic_url": "http://urlof.your.mautic",
 	"form": {
 		"email": 0,
@@ -22,6 +22,7 @@ This is a Mautic Plugin that allow you to Import a List of Contacts Using a CSV 
 6. In this case, the CSV format is: 
 ```
 jose@emailserver.com.br;José de Oliveira
+```
 ```
 maria@emailserver.com.br;Maria Helena
 ```
