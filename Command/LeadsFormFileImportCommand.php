@@ -29,10 +29,10 @@ class LeadsFormFileImportCommand extends ModeratedCommand
         $this
             ->setName('eou:contacts:import-form-file')
             ->setDescription('Import leads into a specific segment.')
-            ->addOption('--file', '-fi', InputOption::VALUE_REQUIRED, 'File to import')
-            ->addOption('--test', '-t', InputOption::VALUE_OPTIONAL, 'Test Values')
-        	->addOption('--startline', '-sl', InputOption::VALUE_OPTIONAL, 'Start Line')
-        	->addOption('--view', '-vi', InputOption::VALUE_OPTIONAL, 'View Results');
+            ->addOption('--file', '', InputOption::VALUE_REQUIRED, 'File to import')
+            ->addOption('--test', '', InputOption::VALUE_OPTIONAL, 'Test Values')
+        	->addOption('--startline', '', InputOption::VALUE_OPTIONAL, 'Start Line')
+        	->addOption('--view', '', InputOption::VALUE_OPTIONAL, 'View Results');
 			
         parent::configure();
     }
