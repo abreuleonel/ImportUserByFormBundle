@@ -74,7 +74,7 @@ class LeadsFormFileImportCommand extends ModeratedCommand
 		
 		$progress = new ProgressBar($output, (int)$totalRows);
 
-		while (($data = fgetcsv($handle, 1000, ";")) !== FALSE) {
+		while (($data = fgetcsv($handle, 1000, $config->separator)) !== FALSE) {
 			$start = microtime(true);
 			
 			$postData = $this->getPostData($config->form, $data);
