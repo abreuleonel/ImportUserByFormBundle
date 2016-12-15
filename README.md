@@ -13,6 +13,7 @@ This is a Mautic Plugin that allow you to Import a List of Contacts Using a CSV 
 	"file": "file_name.CSV",
 	"form_id": "number_form_id",
 	"mautic_url": "http://urlof.your.mautic",
+	"separator": ";",
 	"form": {
 		"email": 0,
 		"name": 1
