@@ -57,7 +57,16 @@ class ImportController extends CommonController
     		
     		move_uploaded_file($_FILES['csv_file']['tmp_name'], $import_folder . '/' . $_FILES['csv_file']['name']);
     		chmod($import_folder . '/' . $_FILES['csv_file']['name'], 0755);
-	    	
+    		
+    		$exe_immediately = $this->get('mautic.helper.core_parameters')->getParameter('execute_immediately');
+    		
+    		if($exe_immediately) {
+    			$console_dir = __DIR__ . '/../../../app';
+    			if(is_dir($console_dir)) {
+    				shell_exec(__DIR__ . '/../Command/cmd_import.sh "' . $console_dir . '"> /dev/null 2>/dev/null &');
+    			}
+    		}
+    		
     		return $this->redirect('/s/importuserbyform');
 		} else {
 			echo 'Error: Invalid JSON! <a href="/s/importuserbyform"> Try Again </a>';
@@ -81,7 +90,7 @@ class ImportController extends CommonController
     	if($this->isJson($json)) {
 			$json_d = json_decode($json, true);
     		
-			if(isset($json_d['file']) && isset($json_d['form_id']) && isset($json_d['mautic_url']) && isset($json_d['form'])) {
+			if(isset($json_d['file']) && (isset($json_d['form_id']) || isset($json_d['segmentAlias'])) && (isset($json_d['form']) || isset($json_d['leadFields']))) {
 				$valid = true;
 			}
     	}

@@ -31,5 +31,6 @@ return [
 	'parameters' => [
 		'import_folder' => '/tmp/lead-import/',
 		'process_folder' => '/tmp/lead-import/',
+		'execute_immediately' => false,
 	]
 ];

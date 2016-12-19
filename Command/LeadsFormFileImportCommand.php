@@ -3,24 +3,12 @@
 namespace MauticPlugin\ImportUserByFormBundle\Command;
 
 use Mautic\CoreBundle\Command\ModeratedCommand;
-use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Helper\ProgressBar;
-use Mautic\CoreBundle\Controller\FormController;
-use Mautic\CoreBundle\Helper\BuilderTokenHelper;
-use Mautic\CoreBundle\Helper\EmojiHelper;
-use Mautic\LeadBundle\Entity\DoNotContact;
 use Mautic\LeadBundle\Entity\Lead;
 use Mautic\LeadBundle\Model\LeadModel;
-use Mautic\LeadBundle\Entity\StatDevice;
-use Mautic\CoreBundle\Helper\Chart\ChartQuery;
-use Symfony\Component\Form\FormError;
-use Symfony\Component\HttpFoundation\File\Exception\FileException;
-use Symfony\Component\HttpFoundation\File\UploadedFile;
-use Symfony\Component\HttpFoundation\JsonResponse;
-    use LeadDetailsTrait;
 
 class LeadsFormFileImportCommand extends ModeratedCommand
 {
@@ -55,30 +43,37 @@ class LeadsFormFileImportCommand extends ModeratedCommand
 		$json = file_get_contents($config_file);
 		$config = json_decode($json);
 		
+		if(isset($config->form)) {
+			$this->importByForm($config, $dir, $input, $output);
+		} elseif(isset($config->leadFields)) {
+			$this->importDirectly($config, $dir, $input, $output);
+		} else {
+			exit('ERRO LINE 63');
+		}
+	}
+
+	private function importByForm($config, $dir, InputInterface $input, OutputInterface $output) 
+	{
 		$file = $dir . $config->file;
 		$form_id = $config->form_id;
 		$uri = $config->mautic_url;
 		$teste = (null !== $input->getOption('test') ? $input->getOption('test') : false);
 		$inicio = (null !== $input->getOption('startline') ? $input->getOption('startline') : 0);
-		$count = 0;		
+		$count = 0;
 		$view_results = (null !== $input->getOption('view') ? $input->getOption('view') : false);
 		
 		$handle = fopen($file, "r");
 		$fp = fopen($dir . "erros.txt", "a");
-		
 		$lock = fopen($dir . "import.lock", "a");
-
 		$processed = fopen($dir . $config->file . "-PROCESSED", "a");
 		
 		$totalRows = shell_exec("wc -l < " . $file);
 		
 		$progress = new ProgressBar($output, (int)$totalRows);
-
+		
 		while (($data = fgetcsv($handle, 1000, $config->separator)) !== FALSE) {
 			$start = microtime(true);
-			
 			$postData = $this->getPostData($config->form, $data);
-			
 			if($teste) {
 				echo $count . ': ' . $data[0] . ' - ' . $data[1] . "\n";
 				$count++;
@@ -94,14 +89,13 @@ class LeadsFormFileImportCommand extends ModeratedCommand
 							echo $count . ': ' . json_encode($postData) . ' - in ' . ($start-$end) ."\n";
 						}
 					} else {
-						echo 'ERRO: ' . json_encode($postData) . ' Salvo no arquivo errors.txt' . "\n";
 						fwrite($fp, 'ERRO: ' .  json_encode($postData)  . "\n");
 					}
 				}
 				$count++;
 			}
 		}
-
+		
 		$progress->finish();
 		
 		fclose ($handle);
@@ -115,11 +109,86 @@ class LeadsFormFileImportCommand extends ModeratedCommand
 		}
 		
 		$this->completeRun();
-
+		
 		return 0;
-
 	}
+	
+	private function importDirectly($config, $dir, InputInterface $input, OutputInterface $output) 
+	{
+		$file    = $dir . $config->file;
+		$row = 0;
+		
+		$fp = fopen($dir . "erros.txt", "a");
+		$lock = fopen($dir . "import.lock", "a");
+		$processed = fopen($dir . $config->file . "-PROCESSED", "a");
+		
+		if (file_exists($file)) {
+			$handle = fopen($file, "r");
+		
+			$totalRows = shell_exec("wc -l < " . $file);
+		
+			$progress = new ProgressBar($output, (int)$totalRows);
+		
+			while (($data = fgetcsv($handle, 1000, $config->separator)) !== FALSE) {
+				$postData = $this->getPostData($config->leadFields, $data);
+				try {
+					$responsePost = $this->addContact($postData, $config->segmentAlias);
+					fwrite($processed, 'PROCESSED: ' . json_encode($postData)  . "\n");
+				} catch (\Exception $e) {
+					fwrite($fp, 'ERRO: ' .  json_encode($postData)  . "\n");
+				}
+				$progress->advance();
+				$row++;
+			}
+		
+			$progress->finish();
+			
+			fclose($fp);
+			fclose($handle);
+			fclose($processed);
+			fclose($lock);
+			
+			$this->moveFiles($config, $dir, $input->getOption('file'));
+			
+			unlink($dir . "import.lock");
+		} else {
+			exit('erro');
+		}
+		
+		if (!$this->checkRunStatus($input, $output)) {
+			return 0;
+		}
+		
+		$this->completeRun();
+		
+		return 0;
+	}
+	
+	private function addContact(array $leadFields, string $segmentAlias)
+	{
+		$container  = $this->getContainer();
+		$factory    = $container->get('mautic.factory');
+	
+		$leadModel = $factory->getModel('Lead');
+		
+		
+		$lead = new Lead();
+		$lead->setNewlyCreated(true);
+		$leadId = null;
 
+		$leadModel->setFieldValues($lead, $leadFields);
+		
+		$saved = $leadModel->saveEntity($lead);
+		
+		$leadModel->setCurrentLead($lead);
+	
+		$modelList  = $factory->getModel('lead.list');
+	
+		$list = $factory->getEntityManager()->getRepository('MauticLeadBundle:LeadList')->getLists(false,$segmentAlias);
+	
+		$leadModel->addToLists($lead, $list);
+	}
+	
 	private function moveFiles($config, $dir, $config_file) 
 	{
 		$filename = explode('.', $config->file)[0];
