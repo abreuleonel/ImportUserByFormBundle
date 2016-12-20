@@ -168,25 +168,50 @@ class LeadsFormFileImportCommand extends ModeratedCommand
 	{
 		$container  = $this->getContainer();
 		$factory    = $container->get('mautic.factory');
-	
+		$doctrine 	= $container->get('doctrine');
+		
+		$consumer_id = (isset($leadFields['consumer_id']) ? $leadFields['consumer_id'] : null);
+		$email = (isset($leadFields['email']) ? $leadFields['email'] : null);
+		
+		if(null === $consumer_id && null === $email) {
+			echo 'Erro: Sem Consumer_id e Email';
+			exit;
+		}
+		
+		$q = $doctrine->getConnection()->createQueryBuilder();
+		$q->select('t.id')
+		->from(MAUTIC_TABLE_PREFIX.'leads', 't')
+		->where('t.consumer_id = ' . $consumer_id);
+		 
+		$qLead = $q->execute()->fetch();
+		$lead_id = (isset($qLead['id']) && !empty($qLead['id'])) ? $qLead['id'] : null;
+		
 		$leadModel = $factory->getModel('Lead');
 		
+		if($lead_id) {
+			$qb = $doctrine->getConnection()->createQueryBuilder();
+			$qb->update(MAUTIC_TABLE_PREFIX.'leads', 't');
+			
+			foreach($leadFields as $lk => $lv) {
+				$qb->set('t.' . $lk,  '"' . $lv . '"');
+			} 
+			
+			$qb->where('t.id = ' . $lead_id);
+			$qb->execute();
+		} else {
+			$lead = new Lead();
+			
+			$leadModel->setFieldValues($lead, $leadFields, true);
+			$leadModel->saveEntity($lead);
+			$lead_id = $lead->getId();
+		}
 		
-		$lead = new Lead();
-		$lead->setNewlyCreated(true);
-		$leadId = null;
-
-		$leadModel->setFieldValues($lead, $leadFields);
-		
-		$saved = $leadModel->saveEntity($lead);
-		
-		$leadModel->setCurrentLead($lead);
-	
 		$modelList  = $factory->getModel('lead.list');
-	
+		
 		$list = $factory->getEntityManager()->getRepository('MauticLeadBundle:LeadList')->getLists(false,$segmentAlias);
-	
-		$leadModel->addToLists($lead, $list);
+		$list_id = key($list);
+
+		$leadModel->addToLists($lead_id, [$list_id]);
 	}
 	
 	private function moveFiles($config, $dir, $config_file) 
