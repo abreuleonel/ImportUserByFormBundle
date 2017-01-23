@@ -14,28 +14,6 @@ class ImportController extends CommonController
     public function indexAction()
     {
     	
-    	$leadModel = $this->getModel('Lead');
-    	$listModel = $this->getModel('lead.list');
-    	
-    	
-    	$q = $this->getDoctrine()->getConnection()->createQueryBuilder();
-    	$q->select('t.id')
-    	->from(MAUTIC_TABLE_PREFIX.'leads', 't')
-    	->where('t.consumer_id = 324473');
-    	
-    	$q->getSql();
-    	$results = $q->execute()->fetch();
-    	echo '<pre>';
-		print_r($results); 
-    	exit;
-    			
-    	$list = $listModel->getRepository()->getLists(false,'segmento-novo');
-    	$list_id = key($list);
-		
-    	$leadModel->addToLists(263306, [$list_id]);
-    	exit('OKAY');
-    	
-    	
     	$import_folder = $this->get('mautic.helper.core_parameters')->getParameter('import_folder');
     	$process_folder = $this->get('mautic.helper.core_parameters')->getParameter('process_folder');
     	$json_file = (file_exists($import_folder . 'import.json') ? $import_folder . 'import.json' : false);
@@ -113,7 +91,7 @@ class ImportController extends CommonController
     	if($this->isJson($json)) {
 			$json_d = json_decode($json, true);
     		
-			if(isset($json_d['file']) && (isset($json_d['form_id']) || isset($json_d['segmentAlias'])) && (isset($json_d['form']) || isset($json_d['leadFields']))) {
+			if((isset($json_d['file']) && (isset($json_d['form_id'])) || (isset($json_d['segmentAlias']) && isset($json_d['leadFields'])))) {
 				$valid = true;
 			}
     	}
